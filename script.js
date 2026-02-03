@@ -3,12 +3,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const createBtn = document.getElementById("createBtn");
 
   /* ===== BAD WORD FILTER ===== */
-  const badWords = ["fuck","shit","bitch","asshole","slut","whore","rape","kill"];
-  function censorText(text){
+  const badWords = [
+    "fuck",
+    "shit",
+    "bitch",
+    "asshole",
+    "slut",
+    "whore",
+    "rape",
+    "kill"
+  ];
+
+  function censorText(text) {
     let censored = text;
     badWords.forEach(word => {
-      const regex = new RegExp(word,"gi");
-      censored = censored.replace(regex,"****");
+      const regex = new RegExp(word, "gi");
+      censored = censored.replace(regex, "****");
     });
     return censored;
   }
@@ -20,8 +30,9 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ===== FETCH NOTES FROM DATABASE ===== */
   async function loadNotes() {
     try {
-      const res = await fetch("/.netlify/functions/notes"); // GET request to function
+      const res = await fetch("/.netlify/functions/notes"); // GET request
       const notes = await res.json();
+
       notesDiv.innerHTML = "";
       notes.forEach(note => {
         const noteDiv = document.createElement("div");
@@ -38,14 +49,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  loadNotes(); // Load notes on page load
+  // Load notes on page load
+  loadNotes();
 
   /* ===== CREATE NOTE ===== */
   createBtn.onclick = async () => {
     const now = Date.now();
 
     // Rate limit (15 seconds)
-    if(now - lastPostTime < 15000){
+    if (now - lastPostTime < 15000) {
       alert("Please wait before posting again.");
       return;
     }
@@ -54,16 +66,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const to_whom = prompt("To:");
     let message = prompt("Your note:");
 
-    if(!message || !to_whom) return;
+    if (!message || !to_whom) return;
 
     // Minimum length
-    if(message.length < 5){
+    if (message.length < 5) {
       alert("Your note is too short.");
       return;
     }
 
     // Duplicate check
-    if(message === lastMessage){
+    if (message === lastMessage) {
       alert("Duplicate message detected.");
       return;
     }
@@ -75,14 +87,14 @@ document.addEventListener("DOMContentLoaded", () => {
     lastMessage = message;
 
     try {
-      // Insert note into Neon database via Netlify function
+      // Send note to Neon database via Netlify function
       await fetch("/.netlify/functions/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, to_whom, message }),
       });
 
-      // Reload notes from database
+      // Reload notes to show the new one
       await loadNotes();
     } catch (err) {
       console.error("Failed to create note:", err);
