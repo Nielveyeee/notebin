@@ -1,23 +1,14 @@
 document.addEventListener("DOMContentLoaded", () => {
   const notesDiv = document.getElementById("notes");
+  const createBtn = document.getElementById("createBtn");
 
   /* ===== BAD WORD FILTER ===== */
-  const badWords = [
-    "fuck",
-    "shit",
-    "bitch",
-    "asshole",
-    "slut",
-    "whore",
-    "rape",
-    "kill"
-  ];
-
-  function censorText(text) {
+  const badWords = ["fuck","shit","bitch","asshole","slut","whore","rape","kill"];
+  function censorText(text){
     let censored = text;
     badWords.forEach(word => {
-      const regex = new RegExp(word, "gi");
-      censored = censored.replace(regex, "****");
+      const regex = new RegExp(word,"gi");
+      censored = censored.replace(regex,"****");
     });
     return censored;
   }
@@ -26,32 +17,53 @@ document.addEventListener("DOMContentLoaded", () => {
   let lastPostTime = 0;
   let lastMessage = "";
 
-  /* ===== CREATE NOTE ===== */
-  const createBtn = document.getElementById("createBtn");
+  /* ===== FETCH NOTES FROM DATABASE ===== */
+  async function loadNotes() {
+    try {
+      const res = await fetch("/.netlify/functions/notes"); // GET request to function
+      const notes = await res.json();
+      notesDiv.innerHTML = "";
+      notes.forEach(note => {
+        const noteDiv = document.createElement("div");
+        noteDiv.className = "note";
+        noteDiv.innerHTML = `
+          <div class="meta">Created by | ${note.name || "Unknown"}</div>
+          <strong>To ${note.to_whom}</strong>
+          <p>${note.message}</p>
+        `;
+        notesDiv.appendChild(noteDiv);
+      });
+    } catch (err) {
+      console.error("Failed to load notes:", err);
+    }
+  }
 
-  createBtn.onclick = () => {
+  loadNotes(); // Load notes on page load
+
+  /* ===== CREATE NOTE ===== */
+  createBtn.onclick = async () => {
     const now = Date.now();
 
     // Rate limit (15 seconds)
-    if (now - lastPostTime < 15000) {
+    if(now - lastPostTime < 15000){
       alert("Please wait before posting again.");
       return;
     }
 
     const name = prompt("Your name (leave blank for Anonymous):");
-    const to = prompt("To:");
+    const to_whom = prompt("To:");
     let message = prompt("Your note:");
 
-    if (!message || !to) return;
+    if(!message || !to_whom) return;
 
     // Minimum length
-    if (message.length < 5) {
+    if(message.length < 5){
       alert("Your note is too short.");
       return;
     }
 
     // Duplicate check
-    if (message === lastMessage) {
+    if(message === lastMessage){
       alert("Duplicate message detected.");
       return;
     }
@@ -62,17 +74,19 @@ document.addEventListener("DOMContentLoaded", () => {
     lastPostTime = now;
     lastMessage = message;
 
-    const note = document.createElement("div");
-    note.className = "note";
-    note.innerHTML = `
-      <div class="meta">
-        Created by | ${name || "Unknown"}
-      </div>
+    try {
+      // Insert note into Neon database via Netlify function
+      await fetch("/.netlify/functions/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, to_whom, message }),
+      });
 
-      <strong>To ${to}</strong>
-      <p>${message}</p>
-    `;
-
-    notesDiv.prepend(note);
+      // Reload notes from database
+      await loadNotes();
+    } catch (err) {
+      console.error("Failed to create note:", err);
+      alert("Failed to save note. Try again.");
+    }
   };
 });
