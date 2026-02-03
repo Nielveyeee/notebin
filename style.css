@@ -1,0 +1,40 @@
+body {
+  background: #0b0b12;
+  color: #e9ddff;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  margin: 0;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  gap: 10px;
+}
+
+input, button {
+  background: #151526;
+  color: #e9ddff;
+  border: 1px solid #7c3aed;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.note {
+  background: #151526;
+  border-left: 4px solid #7c3aed;
+  padding: 12px;
+  margin-top: 15px;
+  border-radius: 6px;
+}
+
+.meta {
+  font-size: 12px;
+  color: #a78bfa; /* soft purple */
+  opacity: 0.8;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
